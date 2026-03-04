@@ -21,9 +21,104 @@ const pickValue = (row: ParsedRow, keys: string[]): string => {
   return "";
 };
 
-const isQuotedMultilineCompatible = (text: string): boolean => text.length > 0;
+const isTextMessage = (text: string): boolean => text.length > 0;
 
-export const parseKakaoCsvFile = (file: File): Promise<KakaoMessage[]> => {
+interface ParsedTxtMessage {
+  date: string;
+  user: string;
+  message: string;
+}
+
+const TXT_LINE_PATTERNS: RegExp[] = [
+  /^\[(?<date>[^\]]+)\]\s*(?<rest>.+)$/,
+  /^(?<date>\d{4}[./-]\d{1,2}[./-]\d{1,2}[ T]\d{1,2}:\d{2}(?::\d{2})?(?:\s*[AP]M)?),\s*(?<rest>.+)$/i,
+  /^(?<date>\d{4}[./-]\d{1,2}[./-]\d{1,2}[ T]\d{1,2}:\d{2}(?::\d{2})?)(?:\s*-)\s*(?<rest>.+)$/i,
+  /^(?<date>\d{4}\.\s*\d{1,2}\.\s*\d{1,2}[^,]*?(?:오전|오후)\s*\d{1,2}:\d{2}(?::\d{2})?),(?<rest>.+)$/i,
+];
+
+const splitSpeakerAndMessage = (line: string): ParsedTxtMessage | null => {
+  for (const pattern of TXT_LINE_PATTERNS) {
+    const match = pattern.exec(line);
+    if (!match?.groups) {
+      continue;
+    }
+
+    const date = normalize(match.groups.date);
+    const rest = normalize(match.groups.rest);
+
+    const hasSeparator = [":", " - ", ","].some((separator) => rest.includes(separator));
+    if (!hasSeparator) {
+      continue;
+    }
+
+    const indexCandidates = [":", " - ", ","]
+      .map((separator) => ({
+        index: rest.indexOf(separator),
+        separator,
+      }))
+      .filter((item) => item.index >= 0)
+      .sort((a, b) => a.index - b.index);
+
+    if (indexCandidates.length === 0) {
+      continue;
+    }
+
+    const { index, separator } = indexCandidates[0];
+    const user = normalize(rest.slice(0, index));
+    const message = normalize(rest.slice(index + separator.length));
+
+    if (!user || message.length === 0) {
+      continue;
+    }
+
+    return { date, user, message };
+  }
+
+  return null;
+};
+
+const parseKakaoTxtFile = async (file: File): Promise<KakaoMessage[]> => {
+  const text = await file.text();
+  const lines = text.replace(/^\uFEFF/, "").split(/\r?\n/);
+
+  const rows: ParsedTxtMessage[] = [];
+  let currentMessage: ParsedTxtMessage | null = null;
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed) {
+      continue;
+    }
+
+    const parsed = splitSpeakerAndMessage(trimmed);
+    if (parsed) {
+      if (currentMessage) {
+        rows.push(currentMessage);
+      }
+      currentMessage = parsed;
+      continue;
+    }
+
+    if (currentMessage) {
+      currentMessage.message = `${currentMessage.message}\n${trimmed}`;
+    }
+  }
+
+  if (currentMessage) {
+    rows.push(currentMessage);
+  }
+
+  return rows
+    .filter((message) => isTextMessage(message.message))
+    .map((message, index) => ({
+      id: index,
+      date: message.date,
+      user: message.user,
+      message: message.message,
+    }));
+};
+
+const parseKakaoCsvFile = (file: File): Promise<KakaoMessage[]> => {
   return new Promise((resolve, reject) => {
     Papa.parse(file, {
       header: true,
@@ -49,7 +144,7 @@ export const parseKakaoCsvFile = (file: File): Promise<KakaoMessage[]> => {
           const user = pickValue(row, HEADER_ALIASES.User);
           const message = pickValue(row, HEADER_ALIASES.Message);
 
-          if (!isQuotedMultilineCompatible(message)) {
+          if (!isTextMessage(message)) {
             return [];
           }
 
@@ -71,3 +166,31 @@ export const parseKakaoCsvFile = (file: File): Promise<KakaoMessage[]> => {
     });
   });
 };
+
+const isTextChatFile = (file: File): boolean => {
+  const fileName = file.name.toLowerCase();
+  return file.type === "text/plain" || fileName.endsWith(".txt") || fileName.endsWith(".csv");
+};
+
+export const parseKakaoFile = async (file: File): Promise<KakaoMessage[]> => {
+  const isTxt = file.name.toLowerCase().endsWith(".txt");
+
+  if (isTxt) {
+    return parseKakaoTxtFile(file);
+  }
+
+  const parsedFromCsv = await parseKakaoCsvFile(file);
+
+  if (parsedFromCsv.length > 0 || !isTextChatFile(file)) {
+    return parsedFromCsv;
+  }
+
+  const parsedFromTxt = await parseKakaoTxtFile(file);
+  if (parsedFromTxt.length > 0) {
+    return parsedFromTxt;
+  }
+
+  return parsedFromCsv;
+};
+
+export { parseKakaoCsvFile };

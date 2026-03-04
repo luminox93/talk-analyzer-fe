@@ -1,9 +1,9 @@
 # Talk Analyzer
 
-A local-only Next.js web app for searching KakaoTalk chat exports in CSV format.
+A local-only Next.js web app for searching KakaoTalk chat exports in CSV and TXT format.
 
 ## Purpose
-- Load a KakaoTalk CSV with columns `Date`, `User`, `Message` in the browser.
+- Load a KakaoTalk CSV or TXT export with local parsing.
 - Parse and index messages locally without uploading raw chat content.
 - Provide fast keyword search and user filtering for large exports.
 
@@ -43,6 +43,18 @@ Date,User,Message
 2026-01-01 12:01,bob,"multi\nline"
 ```
 
+## TXT Input Format
+- Supports plain text exports that follow common KakaoTalk formats.
+- Common supported line pattern: `date, user: message`
+- Supports some variations with brackets (`[date] user: message`) and day period markers (`오전/오후`).
+- Multi-line messages are joined when they continue across lines.
+
+Example (format only, max 3 lines):
+```txt
+2026. 3. 4. 오후 10:07, user: 안녕하세요
+2026. 3. 4. 오후 10:08, user2: 반갑습니다
+```
+
 ## Privacy Model
 - No server storage of uploaded chat data.
 - No network upload/transmission of raw chat messages.
@@ -50,7 +62,7 @@ Date,User,Message
 
 ## Performance Design
 - Fast search is powered by an index-driven search structure.
-- CSV parse and index build run in a Web Worker.
+- CSV/TXT parse and index build run in a Web Worker.
 - Large result sets render with virtualization (`@tanstack/react-virtual`) to keep UI responsive.
 
 ## Limits and Caveats

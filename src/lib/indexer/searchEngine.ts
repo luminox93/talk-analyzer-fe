@@ -1,4 +1,4 @@
-import { parseKakaoCsvFile } from "../parser/kakaoCsvParser";
+import { parseKakaoFile } from "../parser/kakaoCsvParser";
 import { LoadResult, SearchOptions, SearchPayload } from "./types";
 import { createSearchIndex, SearchIndex } from "./searchIndex";
 
@@ -16,7 +16,7 @@ export class SearchEngine {
   async loadCsv(file: File): Promise<LoadResult> {
     const start = performance.now();
 
-    const messages = await parseKakaoCsvFile(file);
+    const messages = await parseKakaoFile(file);
     const engine = this.getEngine();
     engine.setData(messages);
 

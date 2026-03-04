@@ -88,6 +88,11 @@ export default function SearchPanel() {
       return;
     }
 
+    if (!/\.(csv|txt)$/i.test(file.name)) {
+      setErrorMessage("CSV 또는 TXT 파일만 업로드할 수 있습니다.");
+      return;
+    }
+
     const request: WorkerRequest = {
       type: "LOAD_CSV",
       payload: {
@@ -116,14 +121,14 @@ export default function SearchPanel() {
   return (
     <main className="min-h-screen bg-slate-50 p-4 sm:p-8">
       <section className="mx-auto flex w-full max-w-5xl flex-col gap-5 rounded-2xl bg-white p-4 shadow-sm sm:p-6">
-        <h1 className="text-2xl font-semibold text-slate-900">KakaoTalk CSV 검색기</h1>
+        <h1 className="text-2xl font-semibold text-slate-900">KakaoTalk CSV/TXT 검색기</h1>
 
         <div className="grid gap-3 sm:grid-cols-[1fr_220px]">
           <label className="flex flex-col gap-1">
-            <span className="text-sm text-slate-600">CSV 업로드 (.csv)</span>
+            <span className="text-sm text-slate-600">CSV / TXT 업로드 (.csv, .txt)</span>
             <input
               type="file"
-              accept=".csv"
+              accept=".csv,.txt,text/csv,text/plain"
               onChange={onFileChange}
               className="rounded-lg border border-slate-300 p-2"
             />
