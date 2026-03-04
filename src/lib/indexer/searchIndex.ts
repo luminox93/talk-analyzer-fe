@@ -1,7 +1,7 @@
 import { Index } from "flexsearch";
 import { KakaoMessage, SearchHit, SearchOptions } from "./types";
 
-type FlexIndex = InstanceType<typeof Index>;
+type FlexIndex = Index;
 
 type IndexedRecord = Pick<KakaoMessage, "id" | "date" | "user" | "message">;
 
@@ -13,11 +13,8 @@ class SearchIndex {
   private userLabelByKey = new Map<string, string>();
 
   constructor() {
-      this.index = new Index({
-        encode: false,
+    this.index = new Index({
         tokenize: "forward",
-        optimize: true,
-        worker: false,
       }) as FlexIndex;
   }
 
@@ -29,9 +26,7 @@ class SearchIndex {
     this.records.clear();
     this.userIndex.clear();
     this.index = new Index({
-      encode: false,
-      tokenize: "forward",
-      optimize: true,
+        tokenize: "forward",
     }) as FlexIndex;
 
     this.orderedIds = messages.map((message) => message.id);
@@ -74,9 +69,12 @@ class SearchIndex {
       const rawResult = this.index.search(query, {
         limit,
       }) as Array<number> | Array<string>;
-      candidateIds = Array.from(new Set(rawResult)).map((id) =>
-        typeof id === "string" ? Number(id) : id,
-      );
+      const deduplicatedIds = new Set<number>();
+      for (const id of rawResult) {
+        const numericId = typeof id === "string" ? Number(id) : id;
+        deduplicatedIds.add(numericId);
+      }
+      candidateIds = Array.from(deduplicatedIds);
     } else if (userKey) {
       const allowed = this.userIndex.get(userKey);
       if (allowed) {

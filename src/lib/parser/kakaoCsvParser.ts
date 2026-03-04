@@ -28,9 +28,12 @@ export const parseKakaoCsvFile = (file: File): Promise<KakaoMessage[]> => {
     Papa.parse(file, {
       header: true,
       skipEmptyLines: true,
-      transformHeader: (header) => header.trim(),
+      transformHeader: (header: string) => header.trim(),
       delimiter: ",",
-      complete: (results) => {
+      complete: (results: {
+        errors?: Array<{ type: string; message: string }>;
+        data: ParsedRow[];
+      }) => {
         if (results.errors?.length) {
           const hasCriticalErrors = results.errors.some(
             (error) => error.type === "Delimiter" || error.type === "Quotes",
@@ -62,10 +65,9 @@ export const parseKakaoCsvFile = (file: File): Promise<KakaoMessage[]> => {
 
         resolve(parsed);
       },
-      error: (error) => {
+      error: (error: unknown) => {
         reject(error);
       },
     });
   });
 };
-

@@ -8,7 +8,10 @@ import {
   SearchRequest,
 } from "../../worker/messages";
 
-declare const self: DedicatedWorkerGlobalScope;
+declare const self: {
+  postMessage: (data: WorkerResponse) => void;
+  onmessage: (event: MessageEvent<WorkerRequest>) => void;
+};
 
 const searchEngine = new SearchEngine();
 
@@ -54,10 +57,12 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
       return;
     }
 
+    const requestType = (payload as WorkerRequest).type;
+
     post({
       type: "ERROR",
       payload: {
-        requestType: payload.type,
+        requestType,
         message: "Unsupported request type",
       },
     });
