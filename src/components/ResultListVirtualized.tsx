@@ -38,22 +38,20 @@ function ChatBubble({
           </span>
           <div className="flex max-w-[calc(100%-3rem)] flex-col">
             <span className="mb-1 text-xs text-slate-500">{user}</span>
-            <div
-              className="relative rounded-[12px] rounded-tl-[4px] bg-white px-3 py-2 shadow-sm"
-              style={{
-                boxShadow:
-                  "0 1px 2px rgba(0,0,0,0.08), inset 0 0 0 1px rgba(0,0,0,0.03)",
-              }}
-            >
-              <div className="absolute left-[-8px] top-3 h-0 w-0 border-t-[8px] border-r-[8px] border-b-[8px] border-solid border-transparent border-r-white" />
-              <p className="whitespace-pre-wrap break-all text-[14px] leading-7 text-slate-900">
-                {hit.message}
-              </p>
-            </div>
-            <div className="mt-1 flex justify-end">
-              <span className="rounded-md bg-slate-100 px-1.5 py-0.5 text-[11px] text-slate-500">
-                {hit.date || ""}
-              </span>
+            <div className="mt-1 flex items-end gap-2">
+              <div
+                className="relative w-full rounded-[12px] rounded-tl-[4px] bg-white px-3 py-2 shadow-sm"
+                style={{
+                  boxShadow:
+                    "0 1px 2px rgba(0,0,0,0.08), inset 0 0 0 1px rgba(0,0,0,0.03)",
+                }}
+              >
+                <div className="absolute left-[-8px] top-3 h-0 w-0 border-t-[8px] border-r-[8px] border-b-[8px] border-solid border-transparent border-r-white" />
+                <p className="whitespace-pre-wrap break-all text-[14px] leading-7 text-slate-900">
+                  {hit.message}
+                </p>
+              </div>
+              <span className="shrink-0 text-[11px] text-slate-500">{hit.date || ""}</span>
             </div>
           </div>
         </div>
