@@ -90,6 +90,31 @@ const splitSpeakerAndMessage = (line: string): ParsedTxtMessage | null => {
   return null;
 };
 
+const mergeConsecutiveMessages = (messages: ParsedTxtMessage[]): ParsedTxtMessage[] => {
+  const merged: ParsedTxtMessage[] = [];
+
+  for (const message of messages) {
+    if (!isTextMessage(message.message)) {
+      continue;
+    }
+
+    const last = merged[merged.length - 1];
+    if (last && last.user === message.user) {
+      const nextMessage = message.message.trim();
+      if (last.message.length > 0 && nextMessage.length > 0) {
+        last.message = `${last.message}\n${nextMessage}`;
+      } else if (nextMessage.length > 0) {
+        last.message = nextMessage;
+      }
+      continue;
+    }
+
+    merged.push({ ...message });
+  }
+
+  return merged;
+};
+
 const parseKakaoTxtFile = async (file: File): Promise<KakaoMessage[]> => {
   const text = await file.text();
   const lines = text.replace(/^\uFEFF/, "").split(/\r?\n/);
@@ -121,14 +146,25 @@ const parseKakaoTxtFile = async (file: File): Promise<KakaoMessage[]> => {
     rows.push(currentMessage);
   }
 
-  return rows
-    .filter((message) => isTextMessage(message.message))
-    .map((message, index) => ({
-      id: index,
-      date: message.date,
-      user: message.user,
-      message: message.message,
-    }));
+  const merged = mergeConsecutiveMessages(rows);
+
+  return merged.map((message, index) => ({
+    id: index,
+    date: message.date,
+    user: message.user,
+    message: message.message,
+  }));
+};
+
+const mapParsedRows = (messages: ParsedTxtMessage[]): KakaoMessage[] => {
+  const merged = mergeConsecutiveMessages(messages);
+
+  return merged.map((message, index) => ({
+    id: index,
+    date: message.date,
+    user: message.user,
+    message: message.message,
+  }));
 };
 
 const parseKakaoCsvFile = (file: File): Promise<KakaoMessage[]> => {
@@ -152,7 +188,7 @@ const parseKakaoCsvFile = (file: File): Promise<KakaoMessage[]> => {
           }
         }
 
-        const parsed = (results.data as ParsedRow[]).flatMap((row, index) => {
+        const parsed = (results.data as ParsedRow[]).flatMap((row) => {
           const date = pickValue(row, HEADER_ALIASES.Date);
           const user = pickValue(row, HEADER_ALIASES.User);
           const message = pickValue(row, HEADER_ALIASES.Message);
@@ -163,7 +199,7 @@ const parseKakaoCsvFile = (file: File): Promise<KakaoMessage[]> => {
 
           return [
             {
-              id: index,
+              id: 0,
               date,
               user,
               message,
@@ -171,7 +207,7 @@ const parseKakaoCsvFile = (file: File): Promise<KakaoMessage[]> => {
           ];
         });
 
-        resolve(parsed);
+        resolve(mapParsedRows(parsed));
       },
       error: (error: unknown) => {
         reject(error);

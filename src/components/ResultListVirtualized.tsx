@@ -14,9 +14,9 @@ const estimateTextHeight = (text: string): number => {
     return 72;
   }
 
-  const newlineCount = (normalized.match(/\n/g) || []).length + 1;
-  const estimatedWrapLines = Math.ceil(normalized.length / 52);
-  const lines = Math.max(newlineCount, estimatedWrapLines);
+  const explicitLines = normalized.split("\n");
+  const wrappedLinesPerRawLine = explicitLines.map((line) => Math.max(1, Math.ceil(line.length / 52)));
+  const lines = wrappedLinesPerRawLine.reduce((sum, lineCount) => sum + lineCount, 0);
 
   return Math.min(360, 64 + lines * 22);
 };
@@ -59,15 +59,14 @@ export function ResultListVirtualized({ rows }: ResultListVirtualizedProps) {
             <article
               key={virtualItem.key}
               ref={rowVirtualizer.measureElement}
-              className="absolute left-0 top-0 flex w-full flex-col gap-2 border-b border-slate-100 bg-white px-4"
+              className="absolute left-0 top-0 flex w-full border-b border-slate-100 bg-white px-4 py-4"
               style={{
                 transform: `translateY(${virtualItem.start}px)`,
                 width: "100%",
-                paddingTop: "12px",
-                paddingBottom: "12px",
+                boxSizing: "border-box",
               }}
             >
-              <div className="flex items-center justify-between gap-3 text-xs text-slate-500">
+              <div className="mx-auto flex w-full max-w-[72ch] items-center justify-between gap-3 text-xs text-slate-500">
                 <span
                   className="min-w-0 flex-1 truncate text-sm font-semibold text-slate-800"
                   title={row.user || "(알 수 없음)"}
@@ -76,9 +75,11 @@ export function ResultListVirtualized({ rows }: ResultListVirtualizedProps) {
                 </span>
                 <span className="shrink-0 text-[11px] text-slate-400">{row.date || ""}</span>
               </div>
-              <p className="whitespace-pre-wrap break-words text-sm leading-7 text-slate-900 font-normal">
-                {row.message}
-              </p>
+              <div className="mx-auto w-full max-w-[72ch]">
+                <p className="whitespace-pre-wrap break-all text-sm leading-7 text-slate-900 font-normal">
+                  {row.message}
+                </p>
+              </div>
             </article>
           );
         })}
