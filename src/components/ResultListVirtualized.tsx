@@ -14,7 +14,8 @@ export function ResultListVirtualized({ rows }: ResultListVirtualizedProps) {
   const rowVirtualizer = useVirtualizer({
     count: rows.length,
     getScrollElement: () => parentRef.current,
-    estimateSize: () => 100,
+    estimateSize: () => 94,
+    measureElement: (element) => element.getBoundingClientRect().height,
     overscan: 8,
   });
 
@@ -38,24 +39,27 @@ export function ResultListVirtualized({ rows }: ResultListVirtualizedProps) {
           const row = rows[virtualItem.index];
 
           return (
-            <article
-              key={virtualItem.key}
-              className="absolute left-0 top-0 flex w-full flex-col gap-2 border-b border-slate-100 bg-white px-4 py-3"
-              style={{
-                transform: `translateY(${virtualItem.start}px)`,
-                width: "100%",
-              }}
-            >
-              <div className="flex items-center justify-between gap-3 text-xs text-slate-500">
-                <span
-                  className="min-w-0 flex-1 truncate font-medium text-slate-700"
+              <article
+                key={virtualItem.key}
+                ref={rowVirtualizer.measureElement}
+                className="absolute left-0 top-0 flex w-full flex-col gap-2 border-b border-slate-100 bg-white px-4 py-3"
+                style={{
+                  transform: `translateY(${virtualItem.start}px)`,
+                  width: "100%",
+                }}
+              >
+                <div className="flex items-center justify-between gap-3 text-xs text-slate-500">
+                  <span
+                  className="min-w-0 flex-1 truncate text-sm font-semibold text-slate-800"
                   title={row.user || "(알 수 없음)"}
                 >
                   {row.user || "(알 수 없음)"}
                 </span>
-                <span className="shrink-0">{row.date || ""}</span>
+                <span className="shrink-0 text-[11px] text-slate-400">{row.date || ""}</span>
               </div>
-              <p className="whitespace-pre-wrap text-sm leading-6 text-slate-900">{row.message}</p>
+              <p className="whitespace-pre-wrap text-sm leading-7 text-slate-900 font-normal">
+                {row.message}
+              </p>
             </article>
           );
         })}
