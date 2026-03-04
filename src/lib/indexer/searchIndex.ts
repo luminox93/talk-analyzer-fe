@@ -1,7 +1,7 @@
 import { Index } from "flexsearch";
 import { KakaoMessage, SearchHit, SearchOptions } from "./types";
 
-type FlexIndex = ReturnType<typeof Index>;
+type FlexIndex = InstanceType<typeof Index>;
 
 type IndexedRecord = Pick<KakaoMessage, "id" | "date" | "user" | "message">;
 
@@ -13,12 +13,12 @@ class SearchIndex {
   private userLabelByKey = new Map<string, string>();
 
   constructor() {
-    this.index = new Index({
-      encode: false,
-      tokenize: "forward",
-      optimize: true,
-      worker: false,
-    }) as FlexIndex;
+      this.index = new Index({
+        encode: false,
+        tokenize: "forward",
+        optimize: true,
+        worker: false,
+      }) as FlexIndex;
   }
 
   private normalizeUser = (user: string): string => user.trim().toLowerCase();
