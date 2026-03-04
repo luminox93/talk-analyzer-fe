@@ -1,7 +1,7 @@
 import { Index } from "flexsearch";
 import { KakaoMessage, SearchHit, SearchOptions } from "./types";
 
-type FlexIndex = Index;
+type FlexIndex = InstanceType<typeof Index>;
 
 type IndexedRecord = Pick<KakaoMessage, "id" | "date" | "user" | "message">;
 
