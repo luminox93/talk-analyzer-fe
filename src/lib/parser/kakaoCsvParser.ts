@@ -46,28 +46,39 @@ const splitSpeakerAndMessage = (line: string): ParsedTxtMessage | null => {
     const date = normalize(match.groups.date);
     const rest = normalize(match.groups.rest);
 
-    const hasSeparator = [":", " - ", ","].some((separator) => rest.includes(separator));
-    if (!hasSeparator) {
+    const colonMatch = rest.match(/^(?<user>.+?)\s*:\s*(?<message>.*)$/);
+    if (colonMatch?.groups) {
+      const user = normalize(colonMatch.groups.user);
+      const message = normalize(colonMatch.groups.message);
+
+      if (!user) {
+        continue;
+      }
+
+      return { date, user, message };
+    }
+
+    const dashMatch = rest.match(/^(?<user>.+?)\s*-\s*(?<message>.*)$/);
+    if (dashMatch?.groups) {
+      const user = normalize(dashMatch.groups.user);
+      const message = normalize(dashMatch.groups.message);
+
+      if (!user) {
+        continue;
+      }
+
+      return { date, user, message };
+    }
+
+    const commaMatch = rest.match(/^(?<user>.+?)\s*,\s*(?<message>.*)$/);
+    if (!commaMatch?.groups) {
       continue;
     }
 
-    const indexCandidates = [":", " - ", ","]
-      .map((separator) => ({
-        index: rest.indexOf(separator),
-        separator,
-      }))
-      .filter((item) => item.index >= 0)
-      .sort((a, b) => a.index - b.index);
+    const user = normalize(commaMatch.groups.user);
+    const message = normalize(commaMatch.groups.message);
 
-    if (indexCandidates.length === 0) {
-      continue;
-    }
-
-    const { index, separator } = indexCandidates[0];
-    const user = normalize(rest.slice(0, index));
-    const message = normalize(rest.slice(index + separator.length));
-
-    if (!user || message.length === 0) {
+    if (!user) {
       continue;
     }
 
