@@ -8,6 +8,8 @@ const HEADER_ALIASES: Record<string, string[]> = {
 };
 
 const normalize = (value: unknown): string => (value ?? "").toString().trim();
+const normalizeUser = (value: unknown): string =>
+  normalize(value).replace(/[\r\n]+/g, " ").replace(/\s+/g, " ").trim();
 
 const pickValue = (row: ParsedRow, keys: string[]): string => {
   for (const key of keys) {
@@ -48,7 +50,7 @@ const splitSpeakerAndMessage = (line: string): ParsedTxtMessage | null => {
 
     const colonMatch = rest.match(/^(?<user>.+?)\s*:\s*(?<message>.*)$/);
     if (colonMatch?.groups) {
-      const user = normalize(colonMatch.groups.user);
+      const user = normalizeUser(colonMatch.groups.user);
       const message = normalize(colonMatch.groups.message);
 
       if (!user) {
@@ -60,7 +62,7 @@ const splitSpeakerAndMessage = (line: string): ParsedTxtMessage | null => {
 
     const dashMatch = rest.match(/^(?<user>.+?)\s*-\s*(?<message>.*)$/);
     if (dashMatch?.groups) {
-      const user = normalize(dashMatch.groups.user);
+      const user = normalizeUser(dashMatch.groups.user);
       const message = normalize(dashMatch.groups.message);
 
       if (!user) {
@@ -75,7 +77,7 @@ const splitSpeakerAndMessage = (line: string): ParsedTxtMessage | null => {
       continue;
     }
 
-    const user = normalize(commaMatch.groups.user);
+    const user = normalizeUser(commaMatch.groups.user);
     const message = normalize(commaMatch.groups.message);
 
     if (!user) {

@@ -47,8 +47,13 @@ export function ResultListVirtualized({ rows }: ResultListVirtualizedProps) {
               }}
             >
               <div className="flex items-center justify-between gap-3 text-xs text-slate-500">
-                <span className="font-medium text-slate-700">{row.user || "(알 수 없음)"}</span>
-                <span>{row.date || ""}</span>
+                <span
+                  className="min-w-0 flex-1 truncate font-medium text-slate-700"
+                  title={row.user || "(알 수 없음)"}
+                >
+                  {row.user || "(알 수 없음)"}
+                </span>
+                <span className="shrink-0">{row.date || ""}</span>
               </div>
               <p className="whitespace-pre-wrap text-sm leading-6 text-slate-900">{row.message}</p>
             </article>
